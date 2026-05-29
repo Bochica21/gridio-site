@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gridio — Aplicativos e sistemas sob medida em semanas</title>
+<meta name="description" content="Agência de produto digital. Construímos aplicativos, plataformas e automações sob medida em 6 a 9 semanas. Escopo fechado, equipe completa, primeira entrega em 7 dias.">
+<meta property="og:title" content="gridio — Do conceito ao sistema rodando em semanas">
+<meta property="og:description" content="Aplicativos, plataformas e automações sob medida. Escopo fechado, equipe completa.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Geist:wght@300..900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #08080a;
+  --bg-soft: #0c0c10;
+  --surface: #131319;
+  --surface-elevated: #1a1a22;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.48);
+  --text-quaternary: rgba(255, 255, 255, 0.28);
+  --blue: #2952ff;
+  --blue-deep: #1838d9;
+  --blue-glow: rgba(41, 82, 255, 0.45);
+  --blue-light: #6688ff;
+  --orange: #ff8a3d;
+  --orange-glow: rgba(255, 138, 61, 0.22);
+  --green: #4ade80;
+  --display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --body: 'Geist', system-ui, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, monospace;
+  --grid-line: rgba(255, 255, 255, 0.045);
+  --easing: cubic-bezier(0.16, 1, 0.3, 1);
+  --grid-line-opacity: 0.045;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--blue);
+  color: white;
+}
+
+/* ==================== GLOBAL GRID (sempre visível) ==================== */
+/* Posicionado FIXED na viewport: ao rolar, o grid permanece como assinatura visual da marca.
+   Z-index 1 → fica acima dos backgrounds das seções e das auroras, mas abaixo do conteúdo (z-2). */
+.global-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, var(--grid-line-opacity)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, var(--grid-line-opacity)) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 100% 100% at center, black 25%, rgba(0,0,0,0.7) 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 100% 100% at center, black 25%, rgba(0,0,0,0.7) 70%, transparent 100%);
+}
+
+/* ==================== SCROLL SQUARE (percorre o grid acompanhando o scroll) ==================== */
+.scroll-square {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  background: var(--blue);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transform: translate(0, 0);
+  box-shadow:
+    0 0 20px 4px rgba(41, 82, 255, 0.6),
+    0 0 50px 14px rgba(41, 82, 255, 0.32),
+    0 0 100px 30px rgba(41, 82, 255, 0.16);
+  will-change: transform, opacity, filter;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.scroll-square.visible {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .scroll-square {
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    box-shadow:
+      0 0 10px 2px rgba(41, 82, 255, 0.55),
+      0 0 26px 6px rgba(41, 82, 255, 0.28),
+      0 0 56px 16px rgba(41, 82, 255, 0.12);
+  }
+}
+
+/* ==================== AURORAS (color washes per section) ==================== */
+/* Manchas blurred posicionadas absolute dentro das seções. Como o grid global é fixed e elas
+   rolam com o conteúdo, ao scrollar diferentes cores "passam" por trás do grid imóvel. */
+.aurora {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+}
+
+.aurora-lg { width: 760px; height: 580px; }
+.aurora-md { width: 520px; height: 420px; }
+.aurora-sm { width: 360px; height: 300px; }
+
+.aurora-blue       { background: radial-gradient(circle, rgba(41, 82, 255, 0.32) 0%, transparent 65%); }
+.aurora-blue-deep  { background: radial-gradient(circle, rgba(24, 56, 217, 0.38) 0%, transparent 65%); }
+.aurora-blue-light { background: radial-gradient(circle, rgba(102, 136, 255, 0.28) 0%, transparent 65%); }
+.aurora-orange     { background: radial-gradient(circle, rgba(255, 138, 61, 0.22) 0%, transparent 65%); }
+.aurora-orange-soft{ background: radial-gradient(circle, rgba(255, 138, 61, 0.12) 0%, transparent 65%); }
+
+@media (max-width: 700px) {
+  .aurora-lg { width: 480px; height: 380px; }
+  .aurora-md { width: 340px; height: 280px; }
+  .aurora-sm { width: 240px; height: 200px; }
+}
+
+/* Legacy: mantém .grid-bg pra hero (que ainda usa) caso necessário, mas reduzido */
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: none; /* desativado — agora é global */
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ==================== NAV ==================== */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 20px 0;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(8, 8, 10, 0.72);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s var(--easing), padding 0.3s var(--easing);
+}
+
+.nav.scrolled {
+  padding: 14px 0;
+  border-bottom-color: var(--border);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.logo {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-feature-settings: "ss01";
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
+.nav-cta {
+  background: var(--blue);
+  color: white;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-cta:hover {
+  background: var(--blue-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px var(--blue-glow);
+}
+
+@media (max-width: 768px) {
+  .nav-links { gap: 12px; }
+  .nav-link { display: none; }
+}
+
+/* ==================== HERO ==================== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 140px 0 100px;
+  overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute;
+  width: 1200px;
+  height: 800px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--blue-glow) 0%, transparent 60%);
+  top: 50%;
+  left: 60%;
+  transform: translate(-50%, -50%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-glow-orange {
+  position: absolute;
+  width: 600px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--orange-glow) 0%, transparent 60%);
+  top: 30%;
+  right: -10%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-content {
+  max-width: 880px;
+  position: relative;
+  z-index: 3;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  backdrop-filter: blur(8px);
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(44px, 7vw, 92px);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  margin-bottom: 28px;
+  font-variation-settings: "opsz" 96;
+}
+
+.hero h1 .accent {
+  font-style: italic;
+  font-weight: 400;
+  background: linear-gradient(135deg, var(--blue-light) 0%, var(--blue) 50%, var(--orange) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 620px;
+  margin-bottom: 44px;
+  font-weight: 400;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 28px;
+  border-radius: 100px;
+  font-family: var(--body);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.25s var(--easing);
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: white;
+  border: 1px solid var(--blue);
+  box-shadow: 0 0 0 0 var(--blue-glow);
+}
+
+.btn-primary:hover {
+  background: var(--blue-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px var(--blue-glow);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  backdrop-filter: blur(8px);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.24);
+  transform: translateY(-2px);
+}
+
+.btn-arrow {
+  transition: transform 0.25s var(--easing);
+}
+
+.btn:hover .btn-arrow {
+  transform: translateX(3px);
+}
+
+.hero-meta {
+  display: flex;
+  gap: 40px;
+  margin-top: 80px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.hero-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-meta-value {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.hero-meta-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+/* ==================== SECTION BASE ==================== */
+.section {
+  position: relative;
+  padding: 120px 0;
+  overflow: hidden;
+}
+
+.section-header {
+  margin-bottom: 64px;
+  max-width: 760px;
+}
+
+.section-eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--blue-light);
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  margin-bottom: 20px;
+}
+
+.section-subtitle {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 600px;
+}
+
+/* ==================== PRA QUEM (problem) ==================== */
+.problem-section {
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.problem-card {
+  background: var(--bg-soft);
+  padding: 36px 32px;
+  transition: background 0.3s ease;
+  position: relative;
+}
+
+.problem-card:hover {
+  background: var(--surface);
+}
+
+.problem-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(41, 82, 255, 0.12);
+  border: 1px solid rgba(41, 82, 255, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue-light);
+  margin-bottom: 20px;
+}
+
+.problem-card h3 {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.problem-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ==================== TIERS (what we build) ==================== */
+.tiers-section {
+  position: relative;
+}
+
+.tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .tiers-grid { grid-template-columns: 1fr; }
+}
+
+.tier-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 32px;
+  position: relative;
+  transition: all 0.3s var(--easing);
+  display: flex;
+  flex-direction: column;
+}
+
+.tier-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-4px);
+}
+
+.tier-card.featured {
+  background: linear-gradient(180deg, rgba(41, 82, 255, 0.08) 0%, var(--surface) 60%);
+  border-color: rgba(41, 82, 255, 0.3);
+}
+
+.tier-card.featured::before {
+  content: "MAIS PROCURADO";
+  position: absolute;
+  top: -10px;
+  left: 32px;
+  background: var(--blue);
+  color: white;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.06em;
+}
+
+.tier-tag {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  letter-spacing: 0.06em;
+}
+
+.tier-card h3 {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin-bottom: 8px;
+}
+
+.tier-desc {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.tier-list {
+  list-style: none;
+  margin-bottom: 28px;
+  flex-grow: 1;
+}
+
+.tier-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.tier-list li:last-child {
+  border-bottom: none;
+}
+
+.tier-list li::before {
+  content: "→";
+  color: var(--blue-light);
+  font-family: var(--mono);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tier-time {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tier-time strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ==================== PROCESS ==================== */
+.process-section {
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.process-timeline {
+  position: relative;
+}
+
+.process-line {
+  position: absolute;
+  top: 36px;
+  left: 6%;
+  right: 6%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong) 10%, var(--border-strong) 90%, transparent);
+  z-index: 1;
+}
+
+@media (max-width: 900px) {
+  .process-line { display: none; }
+}
+
+.process-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 1100px) {
+  .process-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .process-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+}
+
+.process-step {
+  position: relative;
+}
+
+.process-num {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 auto 20px;
+  transition: all 0.3s var(--easing);
+  position: relative;
+}
+
+.process-step:hover .process-num {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
+  box-shadow: 0 0 24px var(--blue-glow);
+}
+
+.process-step h4 {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.process-step .process-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ==================== CASES — 3 columns now ==================== */
+.cases-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1000px) {
+  .cases-grid { grid-template-columns: 1fr; }
+}
+
+.case-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px 28px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--easing);
+  display: flex;
+  flex-direction: column;
+}
+
+.case-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-4px);
+}
+
+.case-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--orange));
+  opacity: 0.6;
+}
+
+.case-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.case-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--blue-light);
+  flex-shrink: 0;
+}
+
+.case-name {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.case-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.case-summary {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-bottom: 22px;
+}
+
+.case-features {
+  list-style: none;
+  margin-bottom: 22px;
+  flex-grow: 1;
+}
+
+.case-features li {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 7px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.4;
+}
+
+.case-features li:last-child {
+  border-bottom: none;
+}
+
+.case-features li::before {
+  content: "▸";
+  color: var(--blue-light);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.case-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.case-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.case-stat-value {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.case-stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cases-footnote {
+  margin-top: 32px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ==================== SHOWCASE — bento grid com mockups reais ====================
+   Estratégia visual:
+   - 12-col grid em desktop: tiles wide (col-span 7, browser desktop) alternados com tiles narrow
+     (col-span 5, phone mockup). Zigue-zague natural a cada linha.
+   - Mockups construídos em CSS puro (sem imagens de frame) → leveza + tema consistente.
+   - Imagens lazy-loaded, com width/height explícitos pra reservar layout e evitar CLS.
+   - object-fit: cover + object-position: top mostra a parte rica de cada tela e
+     uniformiza alturas entre browser (landscape) e phone (retrato) na mesma linha. */
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .showcase-grid { grid-template-columns: 1fr; gap: 24px; }
+}
+
+.showcase-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s var(--easing), transform 0.3s var(--easing);
+  display: flex;
+  flex-direction: column;
+}
+
+.showcase-tile:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-4px);
+}
+
+.showcase-tile--wide   { grid-column: span 7; }
+.showcase-tile--narrow { grid-column: span 5; }
+
+@media (max-width: 1000px) {
+  .showcase-tile--wide,
+  .showcase-tile--narrow { grid-column: span 1; }
+}
+
+.showcase-tile-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.showcase-tile-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.showcase-tile-tag.is-accent {
+  color: var(--blue-light);
+  border-color: rgba(102, 136, 255, 0.35);
+  background: rgba(41, 82, 255, 0.07);
+}
+
+.showcase-tile-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.showcase-tile-desc {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-bottom: 22px;
+}
+
+.showcase-tile-frame {
+  margin-top: auto;
+}
+
+/* ---- Browser mockup ---- */
+.mockup-browser {
+  border-radius: 12px;
+  background: #0d0d11;
+  border: 1px solid var(--border-strong);
+  overflow: hidden;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.mockup-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #16161c;
+  border-bottom: 1px solid var(--border);
+}
+
+.mockup-browser-dots {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mockup-browser-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.mockup-browser-dot.red    { background: #ff5f57; }
+.mockup-browser-dot.yellow { background: #febc2e; }
+.mockup-browser-dot.green  { background: #28c840; }
+
+.mockup-browser-url {
+  flex-grow: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--bg);
+  padding: 5px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.mockup-browser-viewport {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.mockup-browser-viewport.is-compact {
+  aspect-ratio: 1600 / 465;
+}
+
+.mockup-browser-viewport img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+/* ---- Phone mockup ---- */
+.mockup-phone {
+  width: 100%;
+  max-width: 240px;
+  margin: 0 auto;
+  border-radius: 36px;
+  background: #16161c;
+  border: 1px solid var(--border-strong);
+  padding: 10px;
+  position: relative;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.mockup-phone::before {
+  content: none;
+}
+
+.mockup-phone-screen {
+  border-radius: 26px;
+  overflow: hidden;
+  aspect-ratio: 9 / 19.5;
+  background: var(--bg);
+  position: relative;
+}
+
+.mockup-phone-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+.showcase-footnote {
+  margin-top: 32px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.showcase-footnote strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ==================== WHY — pairs (action → outcome) ==================== */
+.why-section {
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  .why-grid { grid-template-columns: 1fr; }
+}
+
+.why-card {
+  background: var(--bg-soft);
+  padding: 44px 36px;
+  transition: background 0.3s ease;
+}
+
+.why-card:hover {
+  background: var(--surface);
+}
+
+.why-pair {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.why-pair-input {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.why-pair-arrow {
+  font-family: var(--mono);
+  color: var(--blue-light);
+  font-size: 16px;
+}
+
+.why-pair-output {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue-light);
+  font-weight: 500;
+}
+
+.why-card h3 {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.why-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ==================== FAQ ==================== */
+.faq-list {
+  max-width: 820px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+
+.faq-item summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 28px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  transition: color 0.2s ease;
+}
+
+.faq-item summary::-webkit-details-marker { display: none; }
+
+.faq-item summary:hover {
+  color: var(--blue-light);
+}
+
+.faq-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: all 0.3s var(--easing);
+  color: var(--text-secondary);
+}
+
+.faq-item[open] .faq-icon {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  padding: 0 4px 28px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 720px;
+}
+
+.faq-answer p + p {
+  margin-top: 12px;
+}
+
+/* ==================== FINAL CTA ==================== */
+.cta-section {
+  position: relative;
+  padding: 140px 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.cta-glow {
+  position: absolute;
+  width: 1400px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--blue-glow) 0%, transparent 60%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cta-content {
+  position: relative;
+  z-index: 3;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.cta-content h2 {
+  font-family: var(--display);
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin-bottom: 20px;
+}
+
+.cta-content h2 .accent {
+  font-style: italic;
+  color: var(--blue-light);
+  display: inline-block;
+  transform-origin: center;
+  will-change: filter, transform;
+}
+
+@keyframes gridio-flash {
+  0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); transform: scale(1); }
+  15%  { filter: brightness(1.8) drop-shadow(0 0 28px rgba(102, 136, 255, 1)) drop-shadow(0 0 60px rgba(41, 82, 255, 0.7)); transform: scale(1.06); }
+  40%  { filter: brightness(1.4) drop-shadow(0 0 18px rgba(102, 136, 255, 0.75)) drop-shadow(0 0 40px rgba(41, 82, 255, 0.4)); transform: scale(1.02); }
+  70%  { filter: brightness(1.15) drop-shadow(0 0 10px rgba(102, 136, 255, 0.4)); transform: scale(1.005); }
+  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); transform: scale(1); }
+}
+
+.cta-content h2 .accent.flashing {
+  animation: gridio-flash 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta-content p {
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+.cta-meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ==================== CONTACT FORM ==================== */
+.contact-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 44px;
+  text-align: left;
+  margin: 40px auto 0;
+  max-width: 720px;
+  position: relative;
+  z-index: 3;
+}
+
+@media (max-width: 700px) {
+  .contact-form { padding: 28px 22px; border-radius: 20px; }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .form-row { grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-group .required {
+  color: var(--blue-light);
+  margin-left: 4px;
+}
+
+.form-group .optional {
+  color: var(--text-quaternary);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+  font-size: 12px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--text-primary);
+  transition: border-color 0.2s var(--easing), box-shadow 0.2s var(--easing);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-group select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 44px;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 130px;
+  line-height: 1.55;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-quaternary);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(41, 82, 255, 0.18);
+}
+
+.form-error {
+  display: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #ff7a7a;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+  border-color: rgba(255, 122, 122, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 122, 122, 0.1);
+}
+
+.form-group.has-error .form-error {
+  display: block;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+  align-items: flex-start;
+}
+
+#btn-enviar-email {
+  cursor: pointer;
+  font-family: var(--body);
+}
+
+#btn-enviar-email:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.form-help {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+  margin: 0;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-help a {
+  color: var(--blue-light);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(102, 136, 255, 0.3);
+  padding-bottom: 1px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.form-help a:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+}
+
+.btn-copy-inline {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-inline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-copy-inline.copied {
+  color: var(--green);
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+/* Success card */
+.success-card {
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.06) 0%, var(--surface) 80%);
+  border: 1px solid rgba(74, 222, 128, 0.28);
+  border-radius: 24px;
+  padding: 36px 40px;
+  margin: 24px auto 0;
+  max-width: 720px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  z-index: 3;
+}
+
+@media (max-width: 700px) {
+  .success-card { padding: 28px 22px; }
+}
+
+.success-card.hidden {
+  display: none;
+}
+
+.success-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.success-card h3 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.success-card > p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: none;
+}
+
+.success-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  align-self: flex-start;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.success-email code {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* ==================== FOOTER ==================== */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 60px 0 40px;
+  background: var(--bg);
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  max-width: 360px;
+}
+
+.footer-brand .logo {
+  font-size: 32px;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  line-height: 1.55;
+}
+
+.footer-links {
+  display: flex;
+  gap: 80px;
+  flex-wrap: wrap;
+}
+
+.footer-col h5 {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.footer-col a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 4px 0;
+  transition: color 0.2s ease;
+}
+
+.footer-col a:hover {
+  color: var(--text-primary);
+}
+
+.footer-bottom {
+  margin-top: 60px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fadeUp 0.8s var(--easing) forwards;
+}
+
+.fade-in.delay-1 { animation-delay: 0.1s; }
+.fade-in.delay-2 { animation-delay: 0.2s; }
+.fade-in.delay-3 { animation-delay: 0.3s; }
+.fade-in.delay-4 { animation-delay: 0.4s; }
+.fade-in.delay-5 { animation-delay: 0.5s; }
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s var(--easing), transform 0.7s var(--easing);
+}
+
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+  .section { padding: 80px 0; }
+  .hero { padding: 120px 0 80px; }
+  .hero-meta { gap: 24px; margin-top: 48px; }
+  .hero-meta-value { font-size: 26px; }
+  .case-card { padding: 28px 24px; }
+  .case-stats { grid-template-columns: 1fr 1fr; }
+  .why-card { padding: 32px 24px; }
+  .tier-card { padding: 28px 24px; }
+  .showcase-tile { padding: 24px 20px; }
+  .showcase-tile-title { font-size: 20px; }
+  .mockup-phone { max-width: 220px; }
+  .mockup-browser-url { font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== NAV ==================== -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#top" class="logo">gridio</a>
+    <div class="nav-links">
+      <a href="#construimos" class="nav-link">O que construímos</a>
+      <a href="#processo" class="nav-link">Processo</a>
+      <a href="#cases" class="nav-link">Cases</a>
+      <a href="#contato" class="nav-cta">
+        Diagnóstico gratuito
+        <span class="btn-arrow">→</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== GLOBAL GRID (fixed, sempre visível) ==================== -->
+<div class="global-grid" aria-hidden="true"></div>
+
+<!-- ==================== SCROLL SQUARE (percorre o grid acompanhando o scroll) ==================== -->
+<div class="scroll-square" id="scroll-square" aria-hidden="true"></div>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero" id="top">
+  <div class="aurora aurora-lg aurora-blue" style="top: -120px; left: -180px;"></div>
+  <div class="aurora aurora-md aurora-orange-soft" style="bottom: -100px; right: -120px;"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow-orange"></div>
+
+  <div class="container">
+    <div class="hero-content">
+      <div class="eyebrow fade-in">
+        <span class="eyebrow-dot"></span>
+        Aceitando projetos para 2026
+      </div>
+
+      <h1 class="fade-in delay-1">
+        Do conceito ao sistema rodando — <span class="accent">em semanas, não meses.</span>
+      </h1>
+
+      <p class="hero-subtitle fade-in delay-2">
+        Construímos aplicativos, plataformas e automações sob medida. Escopo fechado, equipe completa, primeira entrega em 7 dias.
+      </p>
+
+      <div class="hero-ctas fade-in delay-3">
+        <a href="#contato" class="btn btn-primary">
+          Agendar diagnóstico gratuito
+          <span class="btn-arrow">→</span>
+        </a>
+        <a href="#cases" class="btn btn-secondary">
+          Ver cases
+        </a>
+      </div>
+
+      <div class="hero-meta fade-in delay-4">
+        <div class="hero-meta-item">
+          <span class="hero-meta-value">7 dias</span>
+          <span class="hero-meta-label">Primeira entrega</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-value">6–9 sem.</span>
+          <span class="hero-meta-label">Projeto completo</span>
+        </div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-value">Sem surpresas</span>
+          <span class="hero-meta-label">Escopo e preço fechados</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PRA QUEM ==================== -->
+<section class="section problem-section">
+  <div class="aurora aurora-md aurora-blue-deep" style="top: 10%; right: -100px;"></div>
+  <div class="aurora aurora-sm aurora-blue-deep" style="bottom: 5%; left: -80px;"></div>
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-eyebrow">// Para quem é a Gridio</span>
+      <h2 class="section-title">Se sua operação roda em planilhas, WhatsApp e na cabeça — a Gridio existe para você.</h2>
+      <p class="section-subtitle">O setor não importa. O que importa é existir processo manual reduzindo produtividade, ou ideia parada aguardando virar produto.</p>
+    </div>
+
+    <div class="problem-grid reveal">
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+        </div>
+        <h3>Empresas crescendo em planilhas</h3>
+        <p>O Excel não comporta mais a operação. Cada novo colaborador exige treinamento extenso. Erros humanos viraram rotina.</p>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3>Quem tem ideia, mas não dev</h3>
+        <p>O conceito está claro, o público existe, mas falta quem construa o produto digital de fato.</p>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>
+        </div>
+        <h3>Times que precisam automatizar</h3>
+        <p>Pessoas qualificadas fazendo trabalho repetitivo. Integrações que nunca acontecem. Dados que nunca cruzam.</p>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+        </div>
+        <h3>Negócios lançando algo digital</h3>
+        <p>App, marketplace, SaaS, portal. Validar rápido, lançar com qualidade, sem consumir o capital com agência tradicional.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== O QUE CONSTRUIMOS ==================== -->
+<section class="section tiers-section" id="construimos">
+  <div class="aurora aurora-lg aurora-blue-light" style="top: -50px; left: 50%; transform: translateX(-50%);"></div>
+  <div class="aurora aurora-sm aurora-orange-soft" style="bottom: 10%; right: 5%;"></div>
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-eyebrow">// O que construímos</span>
+      <h2 class="section-title">Da landing simples ao SaaS completo.</h2>
+      <p class="section-subtitle">Três faixas, escopo fechado em cada uma. Você sabe o que vai receber e quanto vai custar antes de começar.</p>
+    </div>
+
+    <div class="tiers-grid reveal">
+      <div class="tier-card">
+        <span class="tier-tag">// FAIXA 01</span>
+        <h3>Presença digital</h3>
+        <p class="tier-desc">Para colocar a empresa ou ideia no ar com qualidade e velocidade.</p>
+        <ul class="tier-list">
+          <li>Landing pages</li>
+          <li>Página de captura</li>
+          <li>MVP simples</li>
+          <li>Site one-page</li>
+        </ul>
+        <div class="tier-time">
+          <span>Prazo médio</span>
+          <strong>2–3 semanas</strong>
+        </div>
+      </div>
+
+      <div class="tier-card featured">
+        <span class="tier-tag">// FAIXA 02</span>
+        <h3>Plataforma institucional</h3>
+        <p class="tier-desc">Para estruturar comunicação, captação ou conteúdo de uma marca consolidada.</p>
+        <ul class="tier-list">
+          <li>Sites institucionais</li>
+          <li>Portais com áreas restritas</li>
+          <li>Blogs e centros de conteúdo</li>
+          <li>Painéis informativos</li>
+        </ul>
+        <div class="tier-time">
+          <span>Prazo médio</span>
+          <strong>4–6 semanas</strong>
+        </div>
+      </div>
+
+      <div class="tier-card">
+        <span class="tier-tag">// FAIXA 03</span>
+        <h3>Sistema sob medida</h3>
+        <p class="tier-desc">Para rodar o núcleo da operação. Multiusuário, multiprocesso, escalável.</p>
+        <ul class="tier-list">
+          <li>Sistema interno completo</li>
+          <li>Automações ponta a ponta</li>
+          <li>CRM personalizado</li>
+          <li>ERP sob medida</li>
+          <li>E-commerce, SaaS, marketplace</li>
+        </ul>
+        <div class="tier-time">
+          <span>Prazo médio</span>
+          <strong>6–9 semanas</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PROCESSO ==================== -->
+<section class="section process-section" id="processo">
+  <div class="aurora aurora-md aurora-blue" style="top: 20%; left: -120px;"></div>
+  <div class="aurora aurora-sm aurora-orange-soft" style="bottom: 15%; right: 8%;"></div>
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-eyebrow">// Como trabalhamos</span>
+      <h2 class="section-title">Seis etapas. Sem zona cinzenta.</h2>
+      <p class="section-subtitle">Você sabe em que fase o projeto está a cada momento, o que sai dela e quando começa a próxima.</p>
+    </div>
+
+    <div class="process-timeline reveal">
+      <div class="process-line"></div>
+      <div class="process-grid">
+        <div class="process-step">
+          <div class="process-num">01</div>
+          <h4>Onboarding e 1ª entrega</h4>
+          <p class="process-time">1 semana</p>
+        </div>
+        <div class="process-step">
+          <div class="process-num">02</div>
+          <h4>Back-end e dados</h4>
+          <p class="process-time">1–2 semanas</p>
+        </div>
+        <div class="process-step">
+          <div class="process-num">03</div>
+          <h4>Front-end e telas</h4>
+          <p class="process-time">1–2 semanas</p>
+        </div>
+        <div class="process-step">
+          <div class="process-num">04</div>
+          <h4>Unificação dos ambientes</h4>
+          <p class="process-time">1–2 semanas</p>
+        </div>
+        <div class="process-step">
+          <div class="process-num">05</div>
+          <h4>Treinamento e lançamento</h4>
+          <p class="process-time">1 semana</p>
+        </div>
+        <div class="process-step">
+          <div class="process-num">06</div>
+          <h4>Garantia e suporte</h4>
+          <p class="process-time">2 semanas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CASES — 3 cards now ==================== -->
+<section class="section" id="cases">
+  <div class="aurora aurora-md aurora-orange" style="top: 8%; right: -100px;"></div>
+  <div class="aurora aurora-md aurora-blue-light" style="bottom: 5%; left: -100px;"></div>
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-eyebrow">// Cases</span>
+      <h2 class="section-title">Empresas reais, sistemas no ar.</h2>
+      <p class="section-subtitle">Três sistemas, três setores. Todos em produção, todos editáveis pelo cliente sem necessidade de desenvolvedor.</p>
+    </div>
+
+    <div class="cases-grid reveal">
+      <!-- Puma -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-logo">P</div>
+          <div>
+            <div class="case-name">Puma Business</div>
+            <div class="case-tag">Plataforma de crédito digital</div>
+          </div>
+        </div>
+
+        <p class="case-summary">Plataforma completa de intermediação de crédito, da simulação ao fechamento. Central do cliente, central administrativa e WhatsApp embutido em uma única solução.</p>
+
+        <ul class="case-features">
+          <li>Site institucional editável</li>
+          <li>Simulação de crédito em tempo real</li>
+          <li>Cadastro, login e área do cliente</li>
+          <li>Central administrativa para a equipe interna</li>
+          <li>WhatsApp integrado nativamente</li>
+        </ul>
+
+        <div class="case-stats">
+          <div class="case-stat">
+            <span class="case-stat-value">No ar</span>
+            <span class="case-stat-label">Em produção</span>
+          </div>
+          <div class="case-stat">
+            <span class="case-stat-value">100%</span>
+            <span class="case-stat-label">Editável pelo cliente</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Avalibens (NEW) -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-logo">A</div>
+          <div>
+            <div class="case-name">Avalibens</div>
+            <div class="case-tag">Sistema de gestão e laudos técnicos</div>
+          </div>
+        </div>
+
+        <p class="case-summary">Plataforma de gestão centralizada para empresa de engenharia. Clientes, projetos, tarefas e automação de laudos técnicos em um sistema multi-usuário.</p>
+
+        <ul class="case-features">
+          <li>Gestão centralizada de clientes, projetos e tarefas</li>
+          <li>Automação de laudos técnicos</li>
+          <li>Cadastro, login e perfis de usuário</li>
+          <li>Estrutura adaptável a novos processos</li>
+        </ul>
+
+        <div class="case-stats">
+          <div class="case-stat">
+            <span class="case-stat-value">No ar</span>
+            <span class="case-stat-label">Em produção</span>
+          </div>
+          <div class="case-stat">
+            <span class="case-stat-value">Multi</span>
+            <span class="case-stat-label">Usuários e perfis</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Giga Fish -->
+      <div class="case-card">
+        <div class="case-header">
+          <div class="case-logo">G</div>
+          <div>
+            <div class="case-name">Giga Fish</div>
+            <div class="case-tag">Gestão de fazenda aquícola</div>
+          </div>
+        </div>
+
+        <p class="case-summary">Sistema de gestão completa para fazenda de peixes e camarões. Controle de funcionários, insumos, estoque e energia, com painel de análise em tempo real.</p>
+
+        <ul class="case-features">
+          <li>Gestão de funcionários e funções</li>
+          <li>Controle de insumos, estoque e energia</li>
+          <li>Painel de análise de dados em tempo real</li>
+          <li>Cliente cria e edita processos sem desenvolvedor</li>
+        </ul>
+
+        <div class="case-stats">
+          <div class="case-stat">
+            <span class="case-stat-value">Real-time</span>
+            <span class="case-stat-label">Painel de dados</span>
+          </div>
+          <div class="case-stat">
+            <span class="case-stat-value">No ar</span>
+            <span class="case-stat-label">Em produção</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="cases-footnote reveal">
+      *Todos com estrutura escalável e adaptável — cliente cria e edita processos por conta própria
+    </p>
+  </div>
+</section>
+
+<!-- ==================== SHOWCASE — Telas reais ==================== -->
+<section class="section" id="showcase">
+  <div class="aurora aurora-md aurora-blue" style="top: 10%; left: -120px;"></div>
+  <div class="aurora aurora-md aurora-orange-soft" style="bottom: 5%; right: -100px;"></div>
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-eyebrow">// Por dentro</span>
+      <h2 class="section-title">Telas reais. Em produção.</h2>
+      <p class="section-subtitle">Snapshots da Puma Business — plataforma de crédito construída e mantida pela Gridio. Cliente e admin, web e mobile, tudo em uso hoje.</p>
+    </div>
+
+    <div class="showcase-grid reveal">
+
+      <!-- 1. Wide: Admin chat WhatsApp (desktop) -->
+      <article class="showcase-tile showcase-tile--wide" data-case="puma">
+        <div class="showcase-tile-meta">
+          <span class="showcase-tile-tag is-accent">Admin</span>
+          <span class="showcase-tile-tag">Desktop</span>
+          <span class="showcase-tile-tag">WhatsApp integrado</span>
+        </div>
+        <h3 class="showcase-tile-title">Atendimento unificado no painel</h3>
+        <p class="showcase-tile-desc">Time interno conversa com clientes direto pela plataforma. Histórico, status da operação e contexto na mesma tela — sem trocar de app.</p>
+        <div class="showcase-tile-frame">
+          <div class="mockup-browser">
+            <div class="mockup-browser-bar">
+              <div class="mockup-browser-dots">
+                <span class="mockup-browser-dot red"></span>
+                <span class="mockup-browser-dot yellow"></span>
+                <span class="mockup-browser-dot green"></span>
+              </div>
+              <div class="mockup-browser-url">pumabusiness.com.br/admin/conversas</div>
+            </div>
+            <div class="mockup-browser-viewport">
+              <img
+                src="./assets/cases/puma/puma-chat-admin.jpg"
+                width="1600" height="1131"
+                loading="lazy" decoding="async"
+                alt="Painel administrativo da Puma Business com chat integrado ao WhatsApp, lista de conversas ativas à esquerda e thread aberta com o cliente Usuário à direita."
+              />
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. Narrow: Cadastro cliente (mobile) -->
+      <article class="showcase-tile showcase-tile--narrow" data-case="puma">
+        <div class="showcase-tile-meta">
+          <span class="showcase-tile-tag is-accent">Cliente</span>
+          <span class="showcase-tile-tag">Mobile</span>
+        </div>
+        <h3 class="showcase-tile-title">Cadastro com progresso visível</h3>
+        <p class="showcase-tile-desc">Cliente preenche dados e já vê estimativa de prazos e parcelas em tempo real. Dados, documentos e aprovação em três etapas guiadas.</p>
+        <div class="showcase-tile-frame">
+          <div class="mockup-phone" aria-hidden="false">
+            <div class="mockup-phone-screen">
+              <img
+                src="./assets/cases/puma/puma-cadastro-mobile.jpg"
+                width="351" height="1600"
+                loading="lazy" decoding="async"
+                alt="Tela mobile de cadastro de veículo da Puma Business mostrando barra de progresso, dados do veículo, dados da operação e simulação de parcelas em 12x, 24x e 36x."
+              />
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 3. Narrow: Dashboard admin (mobile) -->
+      <article class="showcase-tile showcase-tile--narrow" data-case="puma">
+        <div class="showcase-tile-meta">
+          <span class="showcase-tile-tag is-accent">Admin</span>
+          <span class="showcase-tile-tag">Mobile</span>
+        </div>
+        <h3 class="showcase-tile-title">Funil sempre na palma da mão</h3>
+        <p class="showcase-tile-desc">Total de operações, novos cadastros, pendências e encerrados — atualizados em tempo real. Acompanhamento do funil sem abrir o computador.</p>
+        <div class="showcase-tile-frame">
+          <div class="mockup-phone" aria-hidden="false">
+            <div class="mockup-phone-screen">
+              <img
+                src="./assets/cases/puma/puma-dashboard-mobile.jpg"
+                width="378" height="822"
+                loading="lazy" decoding="async"
+                alt="Dashboard mobile do admin da Puma Business com contadores grandes: 4 total de operações, 3 novos cadastros, 0 em aguardo, 1 com pendência, 0 encerrados, e gráfico de tipo de operação."
+              />
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 4. Wide: Lista de operações admin (desktop) -->
+      <article class="showcase-tile showcase-tile--wide" data-case="puma">
+        <div class="showcase-tile-meta">
+          <span class="showcase-tile-tag is-accent">Admin</span>
+          <span class="showcase-tile-tag">Desktop</span>
+          <span class="showcase-tile-tag">Pipeline</span>
+        </div>
+        <h3 class="showcase-tile-title">Pipeline completo, filtrável</h3>
+        <p class="showcase-tile-desc">Todas as operações em uma visão: nome, tipo, valor, status e data. Filtros por estágio do funil — total, novos, aguardando, pendentes, encerrados.</p>
+        <div class="showcase-tile-frame">
+          <div class="mockup-browser">
+            <div class="mockup-browser-bar">
+              <div class="mockup-browser-dots">
+                <span class="mockup-browser-dot red"></span>
+                <span class="mockup-browser-dot yellow"></span>
+                <span class="mockup-browser-dot green"></span>
+              </div>
+              <div class="mockup-browser-url">pumabusiness.com.br/admin/operacoes</div>
+            </div>
+            <div class="mockup-browser-viewport is-compact">
+              <img
+                src="./assets/cases/puma/puma-operacoes-admin.jpg"
+                width="1600" height="465"
+                loading="lazy" decoding="async"
+                alt="Tabela de operações no admin da Puma Business mostrando 4 operações com colunas de nome, tipo de operação, valor, status (Novo, Enviar documentos, Corrigir informações) e data de criação."
+              />
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <p class="showcase-footnote reveal">
+      *Em breve: telas da <strong>Avalibens</strong> e da <strong>Giga Fish</strong>.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== POR QUE — pairs from deck ==================== -->
+<section class="section why-section">
+  <div class="aurora aurora-lg aurora-blue-deep" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+  <div class="aurora aurora-sm aurora-orange-soft" style="top: -50px; right: 15%;"></div>
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="section-eyebrow">// Por que Gridio</span>
+      <h2 class="section-title">O que entregamos. O que você recebe.</h2>
+      <p class="section-subtitle">Quatro compromissos que definem nosso modo de trabalho. Cada um à esquerda gera o resultado à direita.</p>
+    </div>
+
+    <div class="why-grid reveal">
+      <div class="why-card">
+        <div class="why-pair">
+          <span class="why-pair-input">TIME COMPLETO</span>
+          <span class="why-pair-arrow">→</span>
+          <span class="why-pair-output">FOCO TOTAL</span>
+        </div>
+        <h3>Equipe dedicada, com foco 100% no seu projeto.</h3>
+        <p>Product Manager, Designer e Desenvolvedor formam um time fechado e especializado, sem divisão de atenção entre múltiplas demandas paralelas. Um projeto por vez, com toda a equipe envolvida.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-pair">
+          <span class="why-pair-input">ESCOPO FECHADO</span>
+          <span class="why-pair-arrow">→</span>
+          <span class="why-pair-output">PREÇO PREVISÍVEL</span>
+        </div>
+        <h3>Você só paga por projeto entregue.</h3>
+        <p>Antes de assinar, você sabe exatamente o que vai receber, quando e por quanto. Mudou de ideia no meio? Quer adicionar funcionalidade? Ajustamos o escopo para o seu negócio.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-pair">
+          <span class="why-pair-input">MOCK GRATUITO</span>
+          <span class="why-pair-arrow">→</span>
+          <span class="why-pair-output">SEM COMPROMISSO</span>
+        </div>
+        <h3>Primeira versão do app em 7 dias, gratuita.</h3>
+        <p>A partir da contratação, dedicamos os primeiros 7 dias para entregar uma versão inicial do aplicativo, sem custo. Se gostar do resultado, prosseguimos com o projeto. Caso contrário, não há cobrança.</p>
+      </div>
+
+      <div class="why-card">
+        <div class="why-pair">
+          <span class="why-pair-input">TREINAMENTO INCLUSO</span>
+          <span class="why-pair-arrow">→</span>
+          <span class="why-pair-output">AUTONOMIA TOTAL</span>
+        </div>
+        <h3>Treinamento incluso para a sua equipe.</h3>
+        <p>Se o negócio requer customização e gerenciamento contínuos, incluímos no escopo o treinamento completo e a configuração da plataforma para que qualquer pessoa, mesmo sem conhecimento técnico, consiga editar e operar o sistema.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section class="section" id="faq-section">
+  <div class="aurora aurora-md aurora-blue" style="top: 30%; right: -150px;"></div>
+  <div class="container">
+    <div class="section-header reveal" style="text-align: center; margin-left: auto; margin-right: auto;">
+      <span class="section-eyebrow">// FAQ</span>
+      <h2 class="section-title">Perguntas que sempre aparecem.</h2>
+    </div>
+
+    <div class="faq-list reveal">
+      <details class="faq-item">
+        <summary>
+          Como vocês entregam em 6–9 semanas?
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-answer">
+          <p>Três fatores combinados. Primeiro: escopo fechado de verdade — definimos tudo no diagnóstico, antes da primeira linha de código. Segundo: stack moderno e produtivo, escolhido para cada projeto, que elimina trabalho repetitivo e acelera entregas sem comprometer a qualidade. Terceiro: time enxuto e dedicado — Product Manager, Designer e Desenvolvedor focados em um projeto por vez, sem reuniões de status com seis pessoas.</p>
+          <p>O essencial não é a ferramenta — é a estrutura de dados bem modelada, a arquitetura pensada para escalar e a performance levada a sério. Em projetos com requisitos de escala extrema, discutimos alternativas no diagnóstico.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Quanto custa um projeto?
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-answer">
+          <p>Depende da faixa. Presença digital (landing, MVP simples) parte de valores acessíveis para validação. Plataforma institucional fica em faixa intermediária. Sistemas sob medida variam conforme a complexidade — número de telas, integrações e perfis de usuário.</p>
+          <p>O diagnóstico gratuito de 30 minutos serve para entender o seu caso e fornecer uma faixa precisa antes de qualquer compromisso. Sem surpresas no caminho.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          E se eu já tenho um sistema rodando?
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-answer">
+          <p>Integramos via API. Nossa stack conecta-se com praticamente qualquer ferramenta que tenha endpoint REST — ERPs, CRMs, gateways de pagamento, WhatsApp, planilhas Google e sistemas legados. Nesses casos, construímos a camada complementar, não um substituto.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          E se eu quiser mudar algo depois da entrega?
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-answer">
+          <p>Há três caminhos. Mudanças simples — campos, textos e fluxos básicos — você mesmo realiza, com base no treinamento entregue. Evoluções maiores entram como nova entrega de escopo fechado, com preço e prazo definidos. Para equipes que desejam evolução constante sem reabrir contrato a cada mudança, oferecemos suporte mensal contínuo.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Vocês trabalham com qualquer setor?
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-answer">
+          <p>Sim. Já entregamos para fintech (Puma Business), engenharia (Avalibens) e aquicultura (Giga Fish). O setor não é o fator decisivo — o que importa é se o problema cabe em sistema ou aplicativo. Operação rodando em planilha, processo manual repetitivo, ideia digital aguardando virar produto: podemos ajudar.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Como funciona o suporte depois do lançamento?
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-answer">
+          <p>Toda entrega inclui 2 semanas de garantia — qualquer bug ou ajuste de comportamento esperado é corrigido sem custo. Após esse período, oferecemos planos de suporte contínuo mensal para equipes que desejam atendimento de plantão para evoluções e correções. Também é possível contratar entregas pontuais sob demanda.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FINAL CTA / FORM ==================== -->
+<section class="cta-section" id="contato">
+  <div class="aurora aurora-lg aurora-blue" style="top: 5%; left: 50%; transform: translateX(-50%);"></div>
+  <div class="aurora aurora-md aurora-orange-soft" style="bottom: 10%; right: -80px;"></div>
+  <div class="cta-glow"></div>
+
+  <div class="container">
+    <div class="cta-content">
+      <h2 class="reveal">Vem ser <span class="accent">Gridio.</span></h2>
+      <p class="reveal">Conte o que precisa construir. Em até 24h, retornamos com uma faixa de prazo, escopo possível e próximos passos. Sem compromisso, sem surpresas.</p>
+    </div>
+
+    <form class="contact-form reveal" id="contato-form" novalidate>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="form-nome">Nome completo<span class="required">*</span></label>
+          <input type="text" id="form-nome" name="nome" placeholder="Seu nome completo" autocomplete="name" required>
+          <span class="form-error">Informe seu nome</span>
+        </div>
+        <div class="form-group">
+          <label for="form-email">Email<span class="required">*</span></label>
+          <input type="email" id="form-email" name="email" placeholder="seu@email.com" autocomplete="email" required>
+          <span class="form-error">Email inválido</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="form-whatsapp">WhatsApp <span class="optional">(opcional)</span></label>
+          <input type="tel" id="form-whatsapp" name="whatsapp" placeholder="(00) 00000-0000" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="form-tipo">Tipo de projeto<span class="required">*</span></label>
+          <select id="form-tipo" name="tipo" required>
+            <option value="">Selecione...</option>
+            <option value="Landing Page">Landing Page</option>
+            <option value="Site institucional">Site institucional</option>
+            <option value="Sistema interno">Sistema interno</option>
+            <option value="CRM / ERP">CRM / ERP</option>
+            <option value="E-commerce / SaaS">E-commerce / SaaS</option>
+            <option value="Automação / integração">Automação / integração</option>
+            <option value="Outro">Outro</option>
+          </select>
+          <span class="form-error">Selecione um tipo</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="form-orcamento">Orçamento estimado <span class="optional">(opcional)</span></label>
+        <select id="form-orcamento" name="orcamento">
+          <option value="">Ainda não sei</option>
+          <option value="Até R$ 5.000">Até R$ 5.000</option>
+          <option value="R$ 5.000 – R$ 15.000">R$ 5.000 – R$ 15.000</option>
+          <option value="R$ 15.000 – R$ 30.000">R$ 15.000 – R$ 30.000</option>
+          <option value="Acima de R$ 30.000">Acima de R$ 30.000</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="form-mensagem">Sobre o projeto<span class="required">*</span></label>
+        <textarea id="form-mensagem" name="mensagem" rows="5" placeholder="Descreva sua ideia, o problema a resolver e o prazo desejado..." required></textarea>
+        <span class="form-error">Descreva o projeto</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="btn-enviar-email" class="btn btn-primary">
+          Enviar projeto
+          <span class="btn-arrow">→</span>
+        </button>
+        <p class="form-help">
+          Sem programa de email configurado? Envie diretamente para
+          <a href="mailto:sougridio@gmail.com">sougridio@gmail.com</a>
+          <button type="button" class="btn-copy-inline" data-copy="sougridio@gmail.com" aria-label="Copiar email">Copiar</button>
+        </p>
+      </div>
+    </form>
+
+    <div class="success-card hidden" id="success-card">
+      <div class="success-icon">✓</div>
+      <h3>Seu programa de email foi aberto.</h3>
+      <p>A mensagem já está pré-formatada com todos os dados. Caso nada tenha aberto (ocorre quando não há cliente de email padrão configurado), copie o endereço abaixo e envie diretamente.</p>
+      <div class="success-email">
+        <code>sougridio@gmail.com</code>
+        <button type="button" class="btn-copy-inline" data-copy="sougridio@gmail.com" id="btn-copy-success">Copiar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="#top" class="logo">gridio</a>
+        <p class="footer-tagline">Do conceito ao sistema rodando — em semanas, não meses. Aplicativos, plataformas e automações sob medida.</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Navegação</h5>
+          <a href="#construimos">O que construímos</a>
+          <a href="#processo">Processo</a>
+          <a href="#cases">Cases</a>
+          <a href="#contato">Contato</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Contato</h5>
+          <a href="mailto:sougridio@gmail.com">sougridio@gmail.com</a>
+          <a href="https://www.linkedin.com/company/gridiobr/" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Gridio</span>
+      <span>Florianópolis, BR  ·  Aceitando projetos</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ============ NAV scroll state ============ */
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  /* ============ SCROLL SQUARE — percorre o grid (ancorado aos títulos) ============ */
+  (function () {
+    const square = document.getElementById('scroll-square');
+    if (!square) return;
+
+    // Respeitar preferência por movimento reduzido
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      square.style.display = 'none';
+      return;
+    }
+
+    const COL_W = 56;          // largura da coluna do grid
+    let SIZE = 40;             // tamanho do quadrado (responsivo)
+    const LERP_POS = 0.10;     // suavização posição (menor = mais fluido)
+    const LERP_FX  = 0.14;     // suavização opacity/scale/blur
+    const COL_OFFSET = -1;     // colunas à esquerda do título (1 col à esquerda)
+    const MOBILE_BREAK = 900;
+
+    function isMobile() { return window.innerWidth <= MOBILE_BREAK; }
+    function readSize() {
+      // Lê o tamanho atual do CSS (que muda via media query)
+      const cs = getComputedStyle(square);
+      const w = parseFloat(cs.width);
+      return (w && w > 0) ? w : 40;
+    }
+
+    // Seções ancoradas pelos seus títulos reais.
+    // A posição X é derivada de getBoundingClientRect() do título a cada frame.
+    const sectionConfigs = [
+      { sel: '.hero',             titleSel: '.hero h1'      },
+      { sel: '.problem-section',  titleSel: '.section-title' },
+      { sel: '.tiers-section',    titleSel: '.section-title' },
+      { sel: '.process-section',  titleSel: '.section-title' },
+      { sel: '#cases',            titleSel: '.section-title' },
+      { sel: '#showcase',         titleSel: '.section-title' },
+      { sel: '.why-section',      titleSel: '.section-title' },
+      { sel: '#faq-section',      titleSel: '.section-title' },
+      { sel: '.cta-section',      titleSel: 'h2'             }
+    ];
+
+    const sections = sectionConfigs
+      .map(c => {
+        const el = document.querySelector(c.sel);
+        const title = el ? el.querySelector(c.titleSel) : null;
+        return (el && title) ? { el, title } : null;
+      })
+      .filter(Boolean);
+
+    if (!sections.length) return;
+
+    // Alvo final: o span "Gridio" no CTA
+    const gridioAccent = document.querySelector('.cta-section .cta-content h2 .accent');
+
+    let canFlash = true;
+    let consumed = false;
+    function triggerFlash() {
+      if (!gridioAccent) return;
+      // Remove (caso resíduo de animação anterior), força reflow, re-adiciona pra reiniciar a animação
+      gridioAccent.classList.remove('flashing');
+      // eslint-disable-next-line no-unused-expressions
+      void gridioAccent.offsetWidth;
+      gridioAccent.classList.add('flashing');
+      // Limpar ao final, permitindo re-disparo futuro
+      gridioAccent.addEventListener('animationend', function onEnd() {
+        gridioAccent.classList.remove('flashing');
+        gridioAccent.removeEventListener('animationend', onEnd);
+      });
+    }
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const easeInOut = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
+    const clamp01 = v => Math.max(0, Math.min(1, v));
+
+    // Estado animado (posição interpolada que persegue o alvo a cada frame)
+    let curX = 0, curY = 0;
+    let curScale = 1, curOpacity = 0, curBlur = 0;
+    let initialized = false;
+
+    function computeTargets() {
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      const docH = document.documentElement.scrollHeight;
+      const ref = scrollY + vh * 0.5;
+
+      // Localizar seção ativa (a que contém o ponto de referência da viewport)
+      let activeIdx = 0;
+      for (let i = 0; i < sections.length; i++) {
+        const t = sections[i].el.offsetTop;
+        const h = sections[i].el.offsetHeight;
+        if (ref >= t && ref < t + h) { activeIdx = i; break; }
+        if (i === sections.length - 1 && ref >= t) activeIdx = i;
+      }
+
+      const active = sections[activeIdx];
+      const secTop = active.el.offsetTop;
+      const secH = active.el.offsetHeight;
+      const secProgress = clamp01((ref - secTop) / secH);
+
+      // X: derivado da posição real do título (viewport coords, pois o ball é fixed)
+      const titleRect = active.title.getBoundingClientRect();
+      let targetX;
+      if (isMobile()) {
+        // Mobile: bolinha próxima à margem esquerda do título, fora do grid rígido
+        targetX = Math.max(10, titleRect.left - 6 - SIZE / 2);
+      } else {
+        // Desktop: alinha à coluna do grid, uma coluna à esquerda do título
+        const titleLeftCol = Math.round(titleRect.left / COL_W);
+        const ballCol = Math.max(1, titleLeftCol + COL_OFFSET);
+        targetX = ballCol * COL_W - SIZE / 2;
+      }
+
+      // Y: descida suave através da seção, começando alinhada com o título
+      // - Quando entrando na seção (progress baixo), Y fica próximo ao título visível
+      // - Quando avança, Y desce até perto do fundo da viewport
+      const titleVpY = clamp01((titleRect.top + titleRect.height * 0.5) / vh) * vh;
+      const yTop = Math.max(100, Math.min(vh * 0.5, titleVpY));
+      const yBot = vh - 100;
+      let targetY = lerp(yTop, yBot, easeInOut(secProgress));
+
+      // Tratamento especial: última seção (CTA) — mira sempre no texto "Gridio"
+      let targetScale = 1, targetOpacity = 1, targetBlur = 0;
+      if (activeIdx === sections.length - 1 && gridioAccent) {
+        const accentRect = gridioAccent.getBoundingClientRect();
+        const accentCx = accentRect.left + accentRect.width / 2 - SIZE / 2;
+        const accentCy = accentRect.top + accentRect.height / 2 - SIZE / 2;
+        const accentCenterY = accentRect.top + accentRect.height / 2;
+
+        // Sobrescreve o alvo: aponta direto pro Gridio (não pra coluna do título)
+        targetX = accentCx;
+        targetY = accentCy;
+
+        // verticalProgress: 0 quando o Gridio está no fundo da viewport, 1 quando atinge ~55% da altura subindo
+        const verticalProgress = clamp01(1 - accentCenterY / (vh * 0.55));
+        const e = easeInOut(verticalProgress);
+
+        // Encolhe progressivamente conforme o accent sobe na tela
+        targetScale = lerp(1, 0.32, e);
+        // Fade-out começa antes (a partir de 0.55 de progresso)
+        targetOpacity = 1 - clamp01((verticalProgress - 0.55) / 0.35);
+
+        // Se o accent já saiu pra cima da viewport, bolinha some por completo
+        if (accentRect.bottom < 0) {
+          targetOpacity = 0;
+        }
+
+        // Após o flash disparar (consumed), bolinha desaparece e encolhe drasticamente
+        if (consumed) {
+          targetOpacity = 0;
+          targetScale = 0.1;
+        }
+      } else {
+        // Re-armar o flash quando volta atrás ou está em outra seção
+        canFlash = true;
+        consumed = false;
+      }
+
+      // Opacidade do grid: cresce progressivamente com o scroll global
+      const totalScroll = Math.max(1, docH - vh);
+      const globalProgress = clamp01(scrollY / totalScroll);
+
+      return {
+        x: targetX, y: targetY,
+        scale: targetScale, opacity: targetOpacity, blur: targetBlur,
+        gridOp: 0.045 + globalProgress * 0.085
+      };
+    }
+
+    function tick() {
+      const t = computeTargets();
+
+      // Snap na primeira frame para evitar glide inicial vindo de (0,0)
+      if (!initialized) {
+        curX = t.x;
+        curY = t.y;
+        curScale = t.scale;
+        curBlur = t.blur;
+        // curOpacity começa em 0 para fade-in
+        initialized = true;
+      }
+
+      curX += (t.x - curX) * LERP_POS;
+      curY += (t.y - curY) * LERP_POS;
+      curScale += (t.scale - curScale) * LERP_FX;
+      curOpacity += (t.opacity - curOpacity) * LERP_FX;
+      curBlur += (t.blur - curBlur) * LERP_FX;
+
+      // Dispara o flash quando a bolinha "entra" no texto Gridio.
+      // canFlash é resetado em computeTargets quando sai da seção final.
+      if (canFlash && gridioAccent) {
+        const rect = gridioAccent.getBoundingClientRect();
+        const vh = window.innerHeight;
+        // Só dispara se o accent está visível na viewport
+        if (rect.top < vh && rect.bottom > 0) {
+          const accentCx = rect.left + rect.width / 2 - SIZE / 2;
+          const accentCy = rect.top + rect.height / 2 - SIZE / 2;
+          const dx = curX - accentCx;
+          const dy = curY - accentCy;
+          const dist = Math.hypot(dx, dy);
+          const accentCenterY = rect.top + rect.height / 2;
+          const vp = clamp01(1 - accentCenterY / (vh * 0.55));
+
+          // Dispara em qualquer um dos casos:
+          //  1. Bolinha visualmente colidiu com o accent (dist pequena E já encolhida)
+          //  2. Accent está quase saindo pelo topo e ainda não disparou (fallback de segurança)
+          if ((dist < 60 && curScale < 0.85) || vp > 0.85) {
+            triggerFlash();
+            canFlash = false;
+            consumed = true;
+          }
+        }
+      }
+
+      square.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)})`;
+      square.style.opacity = curOpacity.toFixed(3);
+      square.style.filter = curBlur > 0.2 ? `blur(${curBlur.toFixed(2)}px)` : '';
+
+      if (!square.classList.contains('visible')) square.classList.add('visible');
+
+      document.documentElement.style.setProperty('--grid-line-opacity', t.gridOp.toFixed(4));
+
+      requestAnimationFrame(tick);
+    }
+
+    // Re-inicializar em resize (alvos mudam, evita glide através da tela)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        SIZE = readSize();
+        initialized = false;
+      }, 120);
+    });
+
+    // Iniciar após layout estabilizar
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      SIZE = readSize();
+      tick();
+    }));
+  })();
+
+  /* ============ Reveal on scroll ============ */
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in-view'));
+  }
+
+  /* ============ Form: WhatsApp mask ============ */
+  const whatsappInput = document.getElementById('form-whatsapp');
+  if (whatsappInput) {
+    whatsappInput.addEventListener('input', (e) => {
+      const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+      const m = digits.match(/^(\d{0,2})(\d{0,5})(\d{0,4})$/);
+      if (!m) return;
+      let formatted = '';
+      if (m[1]) formatted = '(' + m[1];
+      if (m[1] && m[1].length === 2) formatted += ') ';
+      if (m[2]) formatted += m[2];
+      if (m[3]) formatted += '-' + m[3];
+      e.target.value = formatted;
+    });
+  }
+
+  /* ============ Form: validation + mailto ============ */
+  const form = document.getElementById('contato-form');
+  const btnEnviar = document.getElementById('btn-enviar-email');
+  const successCard = document.getElementById('success-card');
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const setError = (id, hasError) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const group = el.closest('.form-group');
+    if (group) group.classList.toggle('has-error', hasError);
+  };
+
+  // Clear error state on input
+  ['form-nome', 'form-email', 'form-tipo', 'form-mensagem'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => setError(id, false));
+      el.addEventListener('change', () => setError(id, false));
+    }
+  });
+
+  if (btnEnviar) {
+    btnEnviar.addEventListener('click', () => {
+      const nome = document.getElementById('form-nome').value.trim();
+      const email = document.getElementById('form-email').value.trim();
+      const whatsapp = document.getElementById('form-whatsapp').value.trim();
+      const tipo = document.getElementById('form-tipo').value;
+      const orcamento = document.getElementById('form-orcamento').value;
+      const mensagem = document.getElementById('form-mensagem').value.trim();
+
+      let isValid = true;
+      if (!nome) { setError('form-nome', true); isValid = false; }
+      if (!isValidEmail(email)) { setError('form-email', true); isValid = false; }
+      if (!tipo) { setError('form-tipo', true); isValid = false; }
+      if (!mensagem) { setError('form-mensagem', true); isValid = false; }
+
+      if (!isValid) {
+        // Scroll to first error
+        const firstError = document.querySelector('.form-group.has-error');
+        if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const subject = `Novo projeto via site — ${nome} — ${tipo}`;
+
+      const body = `Olá, time Gridio!
+
+Tenho interesse em desenvolver um projeto com vocês. Seguem meus dados:
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+CONTATO
+━━━━━━━━━━━━━━━━━━━━━━━━
+Nome: ${nome}
+Email: ${email}
+WhatsApp: ${whatsapp || 'Não informado'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+PROJETO
+━━━━━━━━━━━━━━━━━━━━━━━━
+Tipo: ${tipo}
+Orçamento estimado: ${orcamento || 'A definir'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+DESCRIÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━
+${mensagem}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+Aguardo retorno!`;
+
+      const mailtoUrl = `mailto:sougridio@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      const originalHTML = btnEnviar.innerHTML;
+      btnEnviar.innerHTML = 'Abrindo email...';
+      btnEnviar.disabled = true;
+
+      window.location.href = mailtoUrl;
+
+      setTimeout(() => {
+        btnEnviar.innerHTML = originalHTML;
+        btnEnviar.disabled = false;
+        if (successCard) {
+          successCard.classList.remove('hidden');
+          successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (form) form.reset();
+      }, 1800);
+    });
+  }
+
+  /* ============ Copy email to clipboard ============ */
+  document.querySelectorAll('.btn-copy-inline').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const text = btn.dataset.copy || 'sougridio@gmail.com';
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (err) {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+      }
+      const original = btn.textContent;
+      btn.textContent = 'Copiado ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  });
+</script>
+
+</body>
+</html>
