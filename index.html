@@ -2530,12 +2530,6 @@ body {
     let curScale = 1, curOpacity = 0, curBlur = 0;
     let initialized = false;
 
-    // Máquina de estado: transição entre seções
-    let phase = 'normal';  // 'normal' | 'crossing' | 'dropping'
-    let prevActiveIdx = -1;
-    let crossingTargetX = 0;
-    let crossingY = 0;
-
     function computeTargets() {
       const scrollY = window.scrollY;
       const vh = window.innerHeight;
@@ -2553,9 +2547,11 @@ body {
       }
 
       const active = sections[activeIdx];
-      const secTop = active.el.offsetTop;
-      const secH = active.el.offsetHeight;
-      const secProgress = clamp01((ref - secTop) / secH);
+
+      // Progresso GLOBAL da página: 0 = topo, 1 = fim do scroll.
+      // Base do Y no modelo híbrido (Y global, X por seção).
+      const totalScroll = Math.max(1, docH - vh);
+      const globalProgress = clamp01(scrollY / totalScroll);
 
       // X: derivado da posição real do título (viewport coords, pois o ball é fixed)
       const titleRect = active.title.getBoundingClientRect();
@@ -2570,13 +2566,12 @@ body {
         targetX = ballCol * COL_W - SIZE / 2;
       }
 
-      // Y: descida suave através da seção, começando alinhada com o título
-      // - Quando entrando na seção (progress baixo), Y fica próximo ao título visível
-      // - Quando avança, Y desce até perto do fundo da viewport
-      const titleVpY = clamp01((titleRect.top + titleRect.height * 0.5) / vh) * vh;
-      const yTop = Math.max(100, Math.min(vh * 0.5, titleVpY));
+      // Y: modelo HÍBRIDO — independe da seção, segue o progresso global.
+      // O square desce continuamente do topo da viewport (scroll 0%) até o
+      // fundo (scroll 100%), como uma barra de progresso vertical.
+      const yTop = 100;
       const yBot = vh - 100;
-      let targetY = lerp(yTop, yBot, easeInOut(secProgress));
+      let targetY = lerp(yTop, yBot, globalProgress);
 
       // Tratamento especial: última seção (CTA) — mira sempre no texto "Gridio"
       let targetScale = 1, targetOpacity = 1, targetBlur = 0;
@@ -2616,14 +2611,10 @@ body {
       }
 
       // Opacidade do grid: cresce progressivamente com o scroll global
-      const totalScroll = Math.max(1, docH - vh);
-      const globalProgress = clamp01(scrollY / totalScroll);
-
       return {
         x: targetX, y: targetY,
         scale: targetScale, opacity: targetOpacity, blur: targetBlur,
-        gridOp: 0.045 + globalProgress * 0.085,
-        activeIdx
+        gridOp: 0.045 + globalProgress * 0.085
       };
     }
 
@@ -2636,39 +2627,14 @@ body {
         curY = t.y;
         curScale = t.scale;
         curBlur = t.blur;
-        prevActiveIdx = t.activeIdx;
         // curOpacity começa em 0 para fade-in
         initialized = true;
       }
 
-      // Detectar troca de seção e iniciar fase 'crossing'
-      // Não dispara ao entrar na última seção (CTA) para preservar lógica do accent
-      if (phase === 'normal' && prevActiveIdx !== -1 && t.activeIdx !== prevActiveIdx && t.activeIdx !== sections.length - 1) {
-        crossingY = window.innerHeight - 100;  // mesmo yBot usado em computeTargets
-        crossingTargetX = t.x;
-        phase = 'crossing';
-      }
-
-      if (phase === 'crossing') {
-        // Desce até o limite inferior da viewport e cruza a tela por baixo
-        crossingTargetX = t.x;  // recalcula o destino antes do lerp de X
-        curX += (crossingTargetX - curX) * 0.06;
-        curY += (crossingY - curY) * 0.08;
-        if (Math.abs(curX - crossingTargetX) < 4) {
-          phase = 'dropping';
-        }
-      } else if (phase === 'dropping') {
-        // X segue normalmente; Y cai mais rápido que o scroll padrão
-        curX += (t.x - curX) * LERP_POS;
-        curY += (t.y - curY) * 0.18;
-        if (Math.abs(curY - t.y) < 3) {
-          phase = 'normal';
-        }
-      } else {
-        // Modo normal
-        curX += (t.x - curX) * LERP_POS;
-        curY += (t.y - curY) * LERP_POS;
-      }
+      // Modelo híbrido: X persegue a coluna do título da seção ativa e
+      // Y persegue o progresso global. Ambos via lerp — sem máquina de fases.
+      curX += (t.x - curX) * LERP_POS;
+      curY += (t.y - curY) * LERP_POS;
 
       curScale += (t.scale - curScale) * LERP_FX;
       curOpacity += (t.opacity - curOpacity) * LERP_FX;
@@ -2708,7 +2674,6 @@ body {
 
       document.documentElement.style.setProperty('--grid-line-opacity', t.gridOp.toFixed(4));
 
-      prevActiveIdx = t.activeIdx;
       requestAnimationFrame(tick);
     }
 
