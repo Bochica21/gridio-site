@@ -121,6 +121,25 @@ body {
   }
 }
 
+/* Pulso de brilho quando o square fica centralizado (mobile <800px) */
+@keyframes square-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 10px 2px rgba(41, 82, 255, 0.45),
+      0 0 26px 6px rgba(41, 82, 255, 0.22),
+      0 0 56px 16px rgba(41, 82, 255, 0.10);
+  }
+  50% {
+    box-shadow:
+      0 0 20px 5px rgba(102, 136, 255, 0.85),
+      0 0 48px 13px rgba(41, 82, 255, 0.50),
+      0 0 96px 30px rgba(41, 82, 255, 0.22);
+  }
+}
+.scroll-square.pulsing {
+  animation: square-glow 2.4s ease-in-out infinite;
+}
+
 /* ==================== AURORAS (color washes per section) ==================== */
 /* Manchas blurred posicionadas absolute dentro das seções. Como o grid global é fixed e elas
    rolam com o conteúdo, ao scrollar diferentes cores "passam" por trás do grid imóvel. */
@@ -1286,18 +1305,6 @@ body {
   will-change: filter, transform;
 }
 
-@keyframes gridio-flash {
-  0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); transform: scale(1); }
-  15%  { filter: brightness(1.8) drop-shadow(0 0 28px rgba(102, 136, 255, 1)) drop-shadow(0 0 60px rgba(41, 82, 255, 0.7)); transform: scale(1.06); }
-  40%  { filter: brightness(1.4) drop-shadow(0 0 18px rgba(102, 136, 255, 0.75)) drop-shadow(0 0 40px rgba(41, 82, 255, 0.4)); transform: scale(1.02); }
-  70%  { filter: brightness(1.15) drop-shadow(0 0 10px rgba(102, 136, 255, 0.4)); transform: scale(1.005); }
-  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); transform: scale(1); }
-}
-
-.cta-content h2 .accent.flashing {
-  animation: gridio-flash 1100ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 .cta-content p {
   font-size: 19px;
   line-height: 1.5;
@@ -1335,6 +1342,16 @@ body {
   max-width: 720px;
   position: relative;
   z-index: 3;
+  transition: box-shadow 600ms ease, border-color 600ms ease;
+}
+
+/* Iluminado quando a bolinha se dissipa no centro (alternado via JS) */
+.contact-form.lit {
+  border-color: rgba(102, 136, 255, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(102, 136, 255, 0.30),
+    0 0 28px 4px rgba(41, 82, 255, 0.22),
+    0 0 70px 14px rgba(41, 82, 255, 0.12);
 }
 
 @media (max-width: 700px) {
@@ -2469,8 +2486,15 @@ body {
     const LERP_FX  = 0.14;     // suavização opacity/scale/blur
     const COL_OFFSET = -1;     // colunas à esquerda do título (1 col à esquerda)
     const MOBILE_BREAK = 900;
+    const CENTER_BREAK = 800;  // abaixo disso, o square fica centralizado na horizontal
+    // Efeito "vivo" do square centralizado (mobile): pulso + flutuação
+    const FLOAT_AMP = 7;       // amplitude do balanço vertical (px)
+    const FLOAT_SPEED = 1.7;   // velocidade do balanço (rad/s)
+    const PULSE_AMP = 0.10;    // amplitude do pulso de escala (±10%)
+    const PULSE_SPEED = 2.3;   // velocidade do pulso (rad/s)
 
     function isMobile() { return window.innerWidth <= MOBILE_BREAK; }
+    function isCentered() { return window.innerWidth < CENTER_BREAK; }
     function readSize() {
       // Lê o tamanho atual do CSS (que muda via media query)
       const cs = getComputedStyle(square);
@@ -2502,24 +2526,8 @@ body {
 
     if (!sections.length) return;
 
-    // Alvo final: o span "Gridio" no CTA
-    const gridioAccent = document.querySelector('.cta-section .cta-content h2 .accent');
-
-    let canFlash = true;
-    let consumed = false;
-    function triggerFlash() {
-      if (!gridioAccent) return;
-      // Remove (caso resíduo de animação anterior), força reflow, re-adiciona pra reiniciar a animação
-      gridioAccent.classList.remove('flashing');
-      // eslint-disable-next-line no-unused-expressions
-      void gridioAccent.offsetWidth;
-      gridioAccent.classList.add('flashing');
-      // Limpar ao final, permitindo re-disparo futuro
-      gridioAccent.addEventListener('animationend', function onEnd() {
-        gridioAccent.classList.remove('flashing');
-        gridioAccent.removeEventListener('animationend', onEnd);
-      });
-    }
+    // Bloco do formulário: ganha um glow suave quando a bolinha se dissipa
+    const contactForm = document.getElementById('contato-form');
 
     const lerp = (a, b, t) => a + (b - a) * t;
     const easeInOut = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2;
@@ -2556,8 +2564,11 @@ body {
       // X: derivado da posição real do título (viewport coords, pois o ball é fixed)
       const titleRect = active.title.getBoundingClientRect();
       let targetX;
-      if (isMobile()) {
-        // Mobile: bolinha próxima à margem esquerda do título, fora do grid rígido
+      if (isCentered()) {
+        // <800px: centralizada na horizontal (Y continua seguindo o scroll)
+        targetX = vw / 2 - SIZE / 2;
+      } else if (isMobile()) {
+        // 800–900px: bolinha próxima à margem esquerda do título
         targetX = Math.max(10, titleRect.left - 6 - SIZE / 2);
       } else {
         // Desktop: alinha à coluna do grid, uma coluna à esquerda do título
@@ -2573,48 +2584,38 @@ body {
       const yBot = vh - 100;
       let targetY = lerp(yTop, yBot, globalProgress);
 
-      // Tratamento especial: última seção (CTA) — mira sempre no texto "Gridio"
+      // Tratamento especial: última seção (CTA) — a bolinha vai pro CENTRO
+      // da viewport e se dissipa ali (blur-out etéreo, independe de mobile/width).
       let targetScale = 1, targetOpacity = 1, targetBlur = 0;
-      if (activeIdx === sections.length - 1 && gridioAccent) {
-        const accentRect = gridioAccent.getBoundingClientRect();
-        const accentCx = accentRect.left + accentRect.width / 2 - SIZE / 2;
-        const accentCy = accentRect.top + accentRect.height / 2 - SIZE / 2;
-        const accentCenterY = accentRect.top + accentRect.height / 2;
+      let dissipating = false, formLit = false;
+      if (activeIdx === sections.length - 1) {
+        // Sobrescreve o alvo: centro exato da tela
+        targetX = vw / 2 - SIZE / 2;
+        targetY = vh / 2 - SIZE / 2;
 
-        // Sobrescreve o alvo: aponta direto pro Gridio (não pra coluna do título)
-        targetX = accentCx;
-        targetY = accentCy;
+        // ctaProgress: 0 quando a seção começa a entrar pelo fundo,
+        // 1 quando seu topo alcança o topo da viewport.
+        const ctaRect = active.el.getBoundingClientRect();
+        const ctaProgress = clamp01((vh - ctaRect.top) / vh);
 
-        // verticalProgress: 0 quando o Gridio está no fundo da viewport, 1 quando atinge ~55% da altura subindo
-        const verticalProgress = clamp01(1 - accentCenterY / (vh * 0.55));
-        const e = easeInOut(verticalProgress);
-
-        // Encolhe progressivamente conforme o accent sobe na tela
-        targetScale = lerp(1, 0.32, e);
-        // Fade-out começa antes (a partir de 0.55 de progresso)
-        targetOpacity = 1 - clamp01((verticalProgress - 0.55) / 0.35);
-
-        // Se o accent já saiu pra cima da viewport, bolinha some por completo
-        if (accentRect.bottom < 0) {
-          targetOpacity = 0;
-        }
-
-        // Após o flash disparar (consumed), bolinha desaparece e encolhe drasticamente
-        if (consumed) {
-          targetOpacity = 0;
-          targetScale = 0.1;
-        }
-      } else {
-        // Re-armar o flash quando volta atrás ou está em outra seção
-        canFlash = true;
-        consumed = false;
+        // Dissolve etéreo: inicia em ~45% do progresso da seção final.
+        // Conforme avança, a opacidade cai, o blur sobe e a escala encolhe de
+        // leve — a bolinha vira uma névoa azul que se desfaz. Reversível no scroll.
+        const diss = clamp01((ctaProgress - 0.45) / 0.5);
+        const e = easeInOut(diss);
+        targetScale = lerp(1, 0.7, e);
+        targetOpacity = 1 - e;
+        targetBlur = e * 14;
+        dissipating = diss > 0;
+        formLit = diss > 0.82;   // bolinha praticamente sumiu → ilumina o formulário
       }
 
       // Opacidade do grid: cresce progressivamente com o scroll global
       return {
         x: targetX, y: targetY,
         scale: targetScale, opacity: targetOpacity, blur: targetBlur,
-        gridOp: 0.045 + globalProgress * 0.085
+        gridOp: 0.045 + globalProgress * 0.085,
+        dissipating, formLit
       };
     }
 
@@ -2640,35 +2641,24 @@ body {
       curOpacity += (t.opacity - curOpacity) * LERP_FX;
       curBlur += (t.blur - curBlur) * LERP_FX;
 
-      // Dispara o flash quando a bolinha "entra" no texto Gridio.
-      // canFlash é resetado em computeTargets quando sai da seção final.
-      if (canFlash && gridioAccent) {
-        const rect = gridioAccent.getBoundingClientRect();
-        const vh = window.innerHeight;
-        // Só dispara se o accent está visível na viewport
-        if (rect.top < vh && rect.bottom > 0) {
-          const accentCx = rect.left + rect.width / 2 - SIZE / 2;
-          const accentCy = rect.top + rect.height / 2 - SIZE / 2;
-          const dx = curX - accentCx;
-          const dy = curY - accentCy;
-          const dist = Math.hypot(dx, dy);
-          const accentCenterY = rect.top + rect.height / 2;
-          const vp = clamp01(1 - accentCenterY / (vh * 0.55));
-
-          // Dispara em qualquer um dos casos:
-          //  1. Bolinha visualmente colidiu com o accent (dist pequena E já encolhida)
-          //  2. Accent está quase saindo pelo topo e ainda não disparou (fallback de segurança)
-          if ((dist < 60 && curScale < 0.85) || vp > 0.85) {
-            triggerFlash();
-            canFlash = false;
-            consumed = true;
-          }
-        }
+      // Efeito "vivo" no modo centralizado (mobile): pulso de escala + flutuação.
+      // O glow pulsante vem da classe .pulsing (CSS), sem conflitar com o transform.
+      let renderY = curY, renderScale = curScale;
+      if (isCentered() && !t.dissipating) {
+        const ts = performance.now() / 1000;
+        renderY = curY + Math.sin(ts * FLOAT_SPEED) * FLOAT_AMP;
+        renderScale = curScale * (1 + Math.sin(ts * PULSE_SPEED) * PULSE_AMP);
+        if (!square.classList.contains('pulsing')) square.classList.add('pulsing');
+      } else if (square.classList.contains('pulsing')) {
+        square.classList.remove('pulsing');
       }
 
-      square.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) scale(${curScale.toFixed(3)})`;
+      square.style.transform = `translate3d(${curX.toFixed(2)}px, ${renderY.toFixed(2)}px, 0) scale(${renderScale.toFixed(3)})`;
       square.style.opacity = curOpacity.toFixed(3);
       square.style.filter = curBlur > 0.2 ? `blur(${curBlur.toFixed(2)}px)` : '';
+
+      // Form ganha um glow suave quando a bolinha termina de se dissipar
+      if (contactForm) contactForm.classList.toggle('lit', t.formLit);
 
       if (!square.classList.contains('visible')) square.classList.add('visible');
 
